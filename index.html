@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>冒险王传说</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 游戏画布 -->
+  <canvas id="gameCanvas"></canvas>
+  
+  <!-- UI 覆盖层 -->
+  <div id="ui-layer">
+    <!-- 主菜单 -->
+    <div id="main-menu" class="menu-screen">
+      <h1 class="game-title">冒险王传说</h1>
+      <div class="menu-buttons">
+        <button class="menu-btn" data-action="start">开始游戏</button>
+        <button class="menu-btn" data-action="class-select">职业选择</button>
+        <button class="menu-btn" data-action="controls">操作说明</button>
+        <button class="menu-btn" data-action="toggle-sound">音量: 开</button>
+      </div>
+      <div class="class-select" id="class-select-panel" style="display:none;">
+        <h2>选择职业</h2>
+        <div class="class-options">
+          <button class="class-btn" data-class="warrior">
+            <div class="class-icon warrior-icon"></div>
+            <span>战士</span>
+            <small>近战大剑 · 血厚防高</small>
+          </button>
+          <button class="class-btn" data-class="mage">
+            <div class="class-icon mage-icon"></div>
+            <span>法师</span>
+            <small>远程魔法 · 高伤害</small>
+          </button>
+          <button class="class-btn" data-class="ranger">
+            <div class="class-icon ranger-icon"></div>
+            <span>游侠</span>
+            <small>弓箭速射 · 灵活</small>
+          </button>
+        </div>
+      </div>
+      <div class="controls-info" id="controls-panel" style="display:none;">
+        <h2>操作说明</h2>
+        <ul>
+          <li>A/D 或 ←/→：移动</li>
+          <li>W/↑/空格：跳跃（支持二段跳）</li>
+          <li>J 或鼠标左键：普通攻击</li>
+          <li>K：技能 1</li>
+          <li>L：技能 2</li>
+          <li>空格长按：蓄力大招</li>
+          <li>I：背包 | M：地图 | Esc：暂停</li>
+          <li>↑：进入传送门/门口</li>
+        </ul>
+      </div>
+    </div>
+    
+    <!-- 暂停菜单 -->
+    <div id="pause-menu" class="menu-screen" style="display:none;">
+      <h2>游戏暂停</h2>
+      <button class="menu-btn" data-action="resume">继续游戏</button>
+      <button class="menu-btn" data-action="restart">重新开始</button>
+    </div>
+    
+    <!-- 结算面板 -->
+    <div id="result-panel" class="menu-screen" style="display:none;">
+      <h2>关卡完成</h2>
+      <div class="result-stats">
+        <p>击杀数: <span id="result-kills">0</span></p>
+        <p>获得经验: <span id="result-exp">0</span></p>
+        <p>获得金币: <span id="result-gold">0</span></p>
+      </div>
+      <div id="result-items"></div>
+      <button class="menu-btn" data-action="next-level">进入下一关</button>
+    </div>
+    
+    <!-- 游戏 HUD -->
+    <div id="game-hud" style="display:none;">
+      <!-- 左上角状态 -->
+      <div class="hud-top-left">
+        <div class="avatar" id="hud-avatar"></div>
+        <div class="bars">
+          <div class="bar hp-bar">
+            <div class="bar-fill" id="hp-fill"></div>
+            <span class="bar-text" id="hp-text">100/100</span>
+          </div>
+          <div class="bar mp-bar">
+            <div class="bar-fill" id="mp-fill"></div>
+            <span class="bar-text" id="mp-text">50/50</span>
+          </div>
+          <div class="bar exp-bar">
+            <div class="bar-fill" id="exp-fill"></div>
+            <span class="bar-text" id="exp-text">0/100</span>
+          </div>
+        </div>
+        <div class="level-badge" id="level-badge">Lv.1</div>
+      </div>
+      
+      <!-- 右上角信息 -->
+      <div class="hud-top-right">
+        <div class="gold-display">
+          <span class="gold-icon"></span>
+          <span id="gold-text">0</span>
+        </div>
+        <div class="level-name" id="level-name">翡翠草原</div>
+        <canvas id="minimap" width="120" height="80"></canvas>
+      </div>
+      
+      <!-- 底部技能栏 -->
+      <div class="hud-bottom">
+        <div class="skill-bar">
+          <div class="skill-slot" data-skill="j">
+            <canvas class="skill-icon" width="48" height="48"></canvas>
+            <div class="cooldown-overlay" id="cd-j"></div>
+            <span class="skill-key">J</span>
+          </div>
+          <div class="skill-slot" data-skill="k">
+            <canvas class="skill-icon" width="48" height="48"></canvas>
+            <div class="cooldown-overlay" id="cd-k"></div>
+            <span class="skill-key">K</span>
+          </div>
+          <div class="skill-slot" data-skill="l">
+            <canvas class="skill-icon" width="48" height="48"></canvas>
+            <div class="cooldown-overlay" id="cd-l"></div>
+            <span class="skill-key">L</span>
+          </div>
+          <div class="skill-slot ultimate" data-skill="ultimate">
+            <canvas class="skill-icon" width="48" height="48"></canvas>
+            <div class="cooldown-overlay" id="cd-ultimate"></div>
+            <div class="ultimate-charge" id="ultimate-charge"></div>
+            <span class="skill-key">空格</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 背包面板 -->
+    <div id="inventory-panel" class="menu-screen" style="display:none;">
+      <h2>背包</h2>
+      <div class="inventory-grid" id="inventory-grid"></div>
+      <button class="menu-btn" data-action="close-inventory">关闭</button>
+    </div>
+  </div>
+  
+  <!-- 手机虚拟按键 -->
+  <div id="mobile-controls">
+    <!-- 左侧虚拟摇杆 -->
+    <div id="joystick-area">
+      <div id="joystick-base">
+        <div id="joystick-stick"></div>
+      </div>
+    </div>
+    
+    <!-- 右侧动作按钮 -->
+    <div id="action-buttons">
+      <button id="btn-attack" class="mobile-btn">J</button>
+      <button id="btn-skill1" class="mobile-btn">K</button>
+      <button id="btn-skill2" class="mobile-btn">L</button>
+      <button id="btn-ultimate" class="mobile-btn ultimate">空</button>
+    </div>
+  </div>
+  
+  <!-- 游戏脚本（使用 ES Module） -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
